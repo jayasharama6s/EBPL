@@ -1,0 +1,43 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import nltk
+from nltk.corpus import stopwords
+from transformers import pipeline
+
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+# 1. Sample social media data (replace this with actual Twitter/Facebook/Reddit scraping if needed)
+data = {
+    'username': ['user1', 'user2', 'user3'],
+    'text': [
+        "I love how beautiful this day is!",
+        "Feeling so down and hopeless lately.",
+        "Just got promoted at work, I’m thrilled!"
+    ]
+}
+df = pd.DataFrame(data)
+
+# 2. Text Preprocessing
+def preprocess(text):
+    text = text.lower()
+    text = ' '.join(word for word in text.split() if word not in stop_words)
+    return text
+
+df['clean_text'] = df['text'].apply(preprocess)
+
+# 3. Emotion Detection Pipeline
+emotion_classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", return_all_scores=False)
+df['emotion'] = df['clean_text'].apply(lambda x: emotion_classifier(x)[0]['label'])
+
+# 4. Visualization
+plt.figure(figsize=(8,5))
+sns.countplot(data=df, x='emotion', palette='Set2')
+plt.title('Detected Emotions in Social Media Conversations')
+plt.xlabel('Emotion')
+plt.ylabel('Count')
+plt.show()
+
+# 5. Display results
+print(df[['username', 'text', 'emotion']])
